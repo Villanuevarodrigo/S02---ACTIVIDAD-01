@@ -43,11 +43,13 @@ class MiAgente(Agente):
     
     def __init__(self):
         super().__init__(nombre="Mi Agente")
-        self.visitados = set()  # Para almacenar posiciones ya visitadas
+        self.visitados = set()  #PARA GUARDAR LAS POSICIONES VISITADAS
+        self.pasos = 0  #CONTADOR DE PASOS
 
     def al_iniciar(self):
         """Llamado al inicio para reiniciar las posiciones visitadas."""
         self.visitados = set()
+        self.pasos = 0 #REINICIAMOS EL CONTADOR DE PASOS
 
     def decidir(self, percepcion):
         """
@@ -60,30 +62,31 @@ class MiAgente(Agente):
             'arriba', 'abajo', 'izquierda' o 'derecha'
         """
         pos_actual = percepcion['posicion']
-        self.visitados.add(pos_actual)  # Guardamos la posición actual para no repetirla
+        self.visitados.add(pos_actual)  #GUARDAMOS LA POSICIÓN ACTUAL COMO VISITADA
 
-        # 1. Si la meta está cerca, vamos directamente hacia ella
+        # 1. SI LA META ESTÁ ADYACENTE, VAMOS HACIA ALLÁ
         for direccion in self.ACCIONES:
             if percepcion[direccion] == 'meta':
+                self.pasos += 1  #INCREMENTAMOS EL CONTADOR DE PASOS
                 return direccion
         
-        # 2. Direcciones ideales para acercarse a la meta
+        # 2. DIRECCIONES IDEALES: AQUELLAS QUE NOS ACERCAN A LA META
         vert, horiz = percepcion['direccion_meta']
         direcciones_ideales = [vert, horiz]
 
-        # 3. Clasificamos las opciones de movimiento
-        no_visitadas_ideales = []  # Direcciones que nos acercan a la meta y no hemos visitado
-        no_visitadas = []  # Direcciones no visitadas
-        visitadas = []  # Direcciones ya visitadas
+        # 3. CLASIFICAMOS LAS DIRECCIONES DISPONIBLES
+        no_visitadas_ideales = []  # DIRECCIONES IDEALES NO VISITADAS
+        no_visitadas = []  # DIRECCIONES NO VISITADAS (NO IDEALES)
+        visitadas = []  # DIRECCIONES YA VISITADAS
 
-        # Evaluamos las direcciones disponibles
+        # EVALUAMOS CADA DIRECCIÓN PARA CLASIFICARLA
         for direccion in self.ACCIONES:
-            if percepcion[direccion] == 'libre':  # Solo consideramos las celdas libres
-                # Calculamos la nueva posición si nos movemos en esa dirección
+            if percepcion[direccion] == 'libre':  # SOLO CONSIDERAMOS DIRECCIONES LIBRES
+                # CALCULAMOS LA POSICIÓN FUTURA SI NOS MOVEMOS EN ESA DIRECCIÓN
                 desplazamiento_fila, desplazamiento_columna = self.DELTAS[direccion]
                 pos_futura = (pos_actual[0] + desplazamiento_fila, pos_actual[1] + desplazamiento_columna)
 
-                # Si no hemos visitado esta posición, la agregamos a las opciones
+                # SI LA POSICIÓN FUTURA NO HA SIDO VISITADA, LA CLASIFICAMOS
                 if pos_futura not in self.visitados:
                     if direccion in direcciones_ideales:
                         no_visitadas_ideales.append(direccion)
@@ -92,19 +95,23 @@ class MiAgente(Agente):
                 else:
                     visitadas.append(direccion)
 
-        # 4. Decisión: Primero intentamos mover hacia la meta
+        # 4. DECISION: PRIMERO INTENTAMOS MOVER EN DIRECCION HACIA LA META, SI ES POSIBLE
         if no_visitadas_ideales:
-            return random.choice(no_visitadas_ideales)  # Escoge una dirección ideal
+            self.pasos += 1  #INCREMENTAMOS EL CONTADOR DE PASOS
+            return random.choice(no_visitadas_ideales)  # Escoge una dirección ideal no visitada al azar
 
-        # 5. Si no tenemos direcciones ideales, exploramos caminos nuevos
+        # 5. SI NO TENEMOS DIRECCIONES, EXPLORA NUEVOS CAMINOS
         if no_visitadas:
-            return random.choice(no_visitadas)  # Escoge un camino no visitado
+            self.pasos += 1  #INCREMENTAMOS EL CONTADOR DE PASOS
+            return random.choice(no_visitadas)  # ESCOGE UNA DIRECCIÓN NO IDEAL NO VISITADA AL AZAR
 
-        # 6. Si estamos atrapados, retrocedemos
+        # 6. SI ESTAMOS ATRAPADOS, RETROCEDEMOS A UNA DIRECCIÓN YA VISITADA PARA INTENTAR OTRA RUTA
         if visitadas:
-            return random.choice(visitadas)  # Retrocedemos a una dirección ya visitada
+            self.pasos += 1  #INCREMENTAMOS EL CONTADOR DE PASOS
+            return random.choice(visitadas)  # RETROCEDE A UNA DIRECCIÓN YA VISITADA AL AZAR
 
-        # 7. Si todo falla, movemos hacia abajo (última opción)
+        # 7. SI FALLA ALGO, MOVEMOS HACIA ABAJO
+        self.pasos += 1  #INCREMENTAMOS EL CONTADOR DE PASOS
         return 'abajo'
         # Ejemplo básico (bórralo y escribe tu propia lógica):
         #
